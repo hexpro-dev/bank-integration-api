@@ -1,0 +1,45 @@
+{
+	"name": "@hex-pro/bank-integration-database",
+	"version": "1.0.0",
+	"description": "Self-hosted Bank Integration database schema and migrations",
+	"private": true,
+	"type": "module",
+	"main": "./dist/schema/index.js",
+	"types": "./dist/schema/index.d.ts",
+	"exports": {
+		".": {
+			"import": "./dist/schema/index.js",
+			"types": "./dist/schema/index.d.ts"
+		},
+		"./schema": {
+			"import": "./dist/schema/schema.js",
+			"types": "./dist/schema/schema.d.ts"
+		},
+		"./types": {
+			"import": "./dist/schema/types.js",
+			"types": "./dist/schema/types.d.ts"
+		}
+	},
+	"files": [
+		"dist",
+		"schema"
+	],
+	"scripts": {
+		"prepare": "pnpm run build:lib",
+		"build:lib": "tsc -p tsconfig.build.json",
+		"db:generate": "tsc -p tsconfig.build.json && drizzle-kit generate",
+		"db:migrate": "drizzle-kit migrate",
+		"db:push": "drizzle-kit push",
+		"db:studio": "drizzle-kit studio",
+		"db:check": "drizzle-kit check",
+		"watch": "tsc -p tsconfig.build.json --watch"
+	},
+	"dependencies": {
+		"dotenv": "^17.3.1",
+		"drizzle-orm": "^0.44.5"
+	},
+	"devDependencies": {
+		"drizzle-kit": "^0.31.4",
+		"typescript": "^5.7.0"
+	}
+}

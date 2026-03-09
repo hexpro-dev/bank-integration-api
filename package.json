@@ -1,0 +1,5 @@
+{
+	"name": "bank-integration-api",
+	"private": true,
+	"packageManager": "pnpm@10.18.2"
+}

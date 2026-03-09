@@ -1,0 +1,12 @@
+{
+    "mcpServers": {
+        "encore-mcp": {
+            "command": "encore",
+            "args": ["mcp", "run", "--app=vytsy"]
+        },
+		"heroui-react": {
+			"command": "npx",
+			"args": ["-y", "@heroui/react-mcp@latest"]
+		}
+    }
+}

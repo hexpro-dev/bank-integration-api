@@ -1,0 +1,50 @@
+{
+  "name": "@hex-pro/bank-integration-api",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Self-hosted Bank Integration API",
+  "license": "MPL-2.0",
+  "type": "module",
+  "scripts": {
+    "debug": "encore run --debug=break",
+    "build": "encore build",
+    "dev": "concurrently --prefix none --hide 1 \"pnpm start\" \"sleep 1 && pnpm watch:api\"",
+    "start": "encore run --port=4000 --listen='0.0.0.0'",
+    "test": "vitest",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "api:generate": "encore gen client --output=../front/app/lib/client.ts",
+    "watch:api": "pnpm nodemon --watch banking --watch users --watch observer --watch gateway --watch health --ext ts --exec \"pnpm api:generate\"",
+    "build:docker": "encore build docker --config infra-config.json bank-integration-api:latest",
+    "build:docker:arm64": "encore build docker --config infra-config.json bank-integration-api:latest --arch arm64"
+  },
+  "devDependencies": {
+    "@types/nodemailer": "^6.4.17",
+    "@types/pg": "^8.11.10",
+    "concurrently": "^9.2.1",
+    "nodemon": "^3.1.9",
+    "prettier": "3.6.2",
+    "tsx": "^4.20.5",
+    "typescript": "^5.9.2",
+    "typescript-eslint": "^8.43.0",
+    "vitest": "^3.2.4"
+  },
+  "dependencies": {
+    "@hex-pro/bank-integration-database": "workspace:*",
+    "@node-rs/argon2": "^2.0.2",
+    "busboy": "^1.6.0",
+    "date-fns": "^4.1.0",
+    "dotenv": "^17.2.2",
+    "drizzle-orm": "^0.44.5",
+    "encore.dev": "^1.54.2",
+    "jose": "^6.1.0",
+    "nodemailer": "^7.0.6",
+    "pg": "^8.16.3",
+    "twilio": "^5.11.2",
+    "uuid": "^13.0.0",
+    "zod": "^4.1.8"
+  },
+  "optionalDependencies": {
+    "@rollup/rollup-linux-x64-gnu": "^4.50.1"
+  }
+}

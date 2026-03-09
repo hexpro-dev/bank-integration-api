@@ -1,0 +1,41 @@
+example-scraper
+
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+.encore/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Encore local secrets
+api/.secrets.local.cue
+
+# Database
+api/lib/migrations/
+
+# Observer
+browser-profiles/
+
+# Frontend
+front/build/
+front/.react-router/
+front/app/lib/client.ts
+
+# IDE
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*

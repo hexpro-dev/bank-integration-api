@@ -1,0 +1,122 @@
+---
+alwaysApply: true
+---
+# Self-hosted Bank Integration API
+
+This project provides a tool that allows users to access their bank account activity through a JSON API. It leverages a puppeteer session driven by the Rebrowser fork, that allows for superior bot detection evasion. 
+
+The initial banks that will be scraped are ANZ, Commonwealth Bank of Australia, NAB and Westpac. A separate scraping module should be created for each bank, but the API configuration and output should be standardised across all.
+
+## Structure
+
+Each component should be deployed as a docker image in production, likely on the same instance, which allows for internal communication, but with separation of concerns.
+
+### Observer (Scraper)
+
+The observer is a puppeteer driven headless browser that scrapes each bank's online banking portal in the `observer` directory. The primary goals are to track:
+
+* Account balances
+* Recent transaction activity
+
+The user can setup a seat per account they want to observe. The seat needs a bank, username and password associated with it, which needs to be stored securely and only accessed by the observer programmatically upon online banking login.
+
+Each bank has its own scraping module assigned to it, which is used upon launching the observer. The observer flow should be:
+
+1. Access login page.
+2. Execute login with realistic human behaviour with trusted browser checked to help with reauthentications.
+3. Handle 2FA challenges (this will likely require user action each time, with option to integrate an API/webhook with a service like Twilio for automatic authentication and automatic forwarding to secondary phone numbers, a kind of phone number proxy).
+4. Watch the dashboard for balance updates (refresh on a 1-5 minute basis for realism), store these balances in the database.
+5. Open a tab for each account that needs to be observed. Track the list of recent transactions. Only refresh these tabs half hourly, or when an API request is made by the user.
+6. Deliver the target data to the database for cached retrieval, or allow API requests to specify live retrieval where the data is directly pulled from the observer on demand.
+7. Handle session expiry gracefully, attempting to login again where possible.
+
+#### Puppeteer Automated Browser
+
+The puppeteer browser is critical to the orchestrator's functionality. In order to handle stealth evasion, a Rebrowser fork of puppeteer will be used. The version selected in the package.json must not change, Rebrowser and Puppeteer versioning must match specific Chrome builds, and the versions configured are compatible. 
+
+An example project using this same technology is provided in the `example-scraper`. You must maintain the same evasion tools used in the example scraper (minus the captcha and proxy rotation functionality, which is not required for this project), because they will allow the browser to be undetectable. Critically, all page interactions must be done through the context bridge to evade CDP detection methods.
+
+### API (Encore.ts)
+
+The backend of this project is coordinated by an Encore.ts API in the `api` directory. It is the only part of the project that directly accesses the database. The observer communicates through it to the database, the frontend and the end-user's API calls.
+
+The API should provide backend functionality for the frontend control plane, as well as providing a clearly defined API for retrieving information from the observer (or cached information from the database). Given the sensitivity of the data, particular attention should be given to ensuring secure API access.
+
+The API should be able to call user-defined webhook endpoints to deliver information when data is updated from the observer (not when on-demand API calls are made, we don't need double ups).
+
+Encore.ts provides its own functionality for generating docker images for self-hosting, and this _must_ be used. Docker images can not be generated for Encore.ts projects naturally. An MCP server and skills are enabled for Encore.ts documentation.
+
+#### Observer-API Streaming Communication
+
+The observer communicates with the API via Encore.ts's native `api.streamInOut` endpoint, which provides bidirectional WebSocket communication. This replaces REST polling and enables real-time data flow.
+
+**Observer -> API messages:**
+* `session_update` - Session status changes (logging_in, 2fa_pending, active, error, expired, logged_out)
+* `balance_update` - Balance data for an account
+* `transactions_update` - Transaction batch for an account
+* `accounts_discovered` - New accounts found during login
+* `heartbeat` - Periodic health signal
+* `screenshot` - 2FA page screenshot (base64)
+
+**API -> Observer messages:**
+* `active_seats` - Sent on connect: all active seats with decrypted credentials
+* `2fa_code` - Pushed instantly when SMS webhook receives a code
+* `refresh_request` - On-demand data refresh from user API call
+* `seat_updated` / `seat_deleted` / `seat_added` - Configuration changes
+* `seat_2fa_updated` - 2FA config changed for a seat
+
+The on-demand refresh flow is: user API request -> API sends `refresh_request` via stream -> observer scrapes fresh data -> observer sends `balance_update`/`transactions_update` via stream -> API persists to DB and dispatches webhooks.
+
+#### Browser Profile Persistence
+
+Each seat gets a dedicated Chrome user data directory (`browser-profiles/<seatId>`) mounted via Docker volume. This maintains trusted-device cookies across container restarts, reducing 2FA challenges after the initial login.
+
+### Database (Postgres)
+
+The database is based on a Postgres image, and must be accessed using Drizzle ORM functions only. Critically, all database updates must be applied through **Drizzle ORM Generated Migrations**. You should **NEVER** write your own migrations, always use `pnpm db:generate` and `pnpm db:migrate`. 
+
+The database should adhere to at least 5NF database normalisation, and apply proper optimisation through indexing and relationships.
+
+The database schema must be stored separately from the api in the `database` directory.
+
+Due to the way that Encore.ts handles Typescript types with the Rust backend, database schemas must be built before being imported into the API. Dynamic and inferred typings are not allowed.
+
+### Frontend (React Router v7)
+
+A frontend control dashboard (directory `front`) will provide visibility on service availability and health, and full configuration capabilities. Among other things, it should allow users to configure:
+
+* Bank logins (seats)
+* API access tokens
+
+It should also provide documentation on how to use the API to access their account data for each seat.
+
+Each seat will need to store the following information:
+
+* Bank Name (select from available scraping modules)
+* Bank Login Username
+* Bank Login Password
+* Automatic 2FA Handling Configuration
+* (optional) Accounts Scope - which accounts should be observed by the API, tracks all by default. Can be specified by name or account number.
+
+#### Automatic 2FA Handling
+
+2FA provides the greatest challenge to implementation, as all banks require it heavily. The tool should provide functionality to automate this process.
+
+For accounts that use SMS code authentication, the best solution is to integrate an SMS service like Twilio or Plivo with webhook endpoints defined per seat, and an API key for sending SMS. 
+
+The flow should be as follows:
+
+1. User sets phone number of their bank login to the SMS API number.
+2. The SMS API received message endpoint should be set to this an endpoint for this tool's API (seat specific).
+3. When a login is attempted by the observer, the API should watch the webhook for incoming 2FA codes. When one is received, it should parse the code and store it in the database as the most recent code. The observer should request an update from the API every 5 seconds while awaiting the 2FA authentication step. When a new code is available, it will finish the login flow gracefully and continue. 
+4. (optional) The user can configure the program to use the same API to forward the SMS to their own phone number. This allows them to make use of the same SMS API number for their own logins too.
+
+If the 2FA method is app-based, then it will need user interaction. The user should be notified that it has made an app request. This will probably need to be email or SMS based as well. Both can simply provide a message that the service needs 2FA confirmation, and provide a link to a temporary image provided by the observer of the 2FA login page (in case there's an app code shown).
+
+#### Web Design
+
+The HeroUI v3 component library should be used extensively for the user interface design. Always check if a component is available in HeroUI v3 before creating your own. An MCP server and skills are enabled for HeroUI v3 documentation.
+
+The website is generally not web-facing, and only requires a login page for unauthenticated routes. All other routes should be protected. 
+
+The design should be practical and fast. It must be responsive and work well on both desktop and mobile devices. Do not waste time on animations that slow down navigation, navigation needs to be instant. This is a professional tool first and foremost. Nevertheless, make sure the design is attractive and modern, but don't be too liberal with padding.

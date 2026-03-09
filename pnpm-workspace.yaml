@@ -1,0 +1,9 @@
+packages:
+  - database
+  - api
+  - observer
+  - front
+
+onlyBuiltDependencies:
+  - esbuild
+  - rebrowser-puppeteer

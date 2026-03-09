@@ -1,0 +1,104 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-bankapi}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+      POSTGRES_DB: ${POSTGRES_DB:-bankapi}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-bankapi}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - bank-integration-net
+
+  migrate:
+    build:
+      context: .
+      dockerfile: database/Dockerfile
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-bankapi}:${POSTGRES_PASSWORD:-changeme}@postgres:5432/${POSTGRES_DB:-bankapi}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - bank-integration-net
+
+  api:
+    image: bank-integration-api:latest
+    restart: unless-stopped
+    ports:
+      - "4000:4000"
+    environment:
+      PORT: 4000
+      DATABASE_URL: postgres://${POSTGRES_USER:-bankapi}:${POSTGRES_PASSWORD:-changeme}@postgres:5432/${POSTGRES_DB:-bankapi}
+      JWT_SECRET: ${JWT_SECRET}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      SMTP_FROM: ${SMTP_FROM:-}
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:4000/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    networks:
+      - bank-integration-net
+
+  observer:
+    build:
+      context: .
+      dockerfile: observer/Dockerfile
+    restart: unless-stopped
+    environment:
+      API_BASE_URL: http://api:4000
+      API_WS_URL: ws://api:4000
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY}
+      CHROME_VERSION: "131"
+      HEADLESS: "1"
+      REBROWSER_PATCHES_RUNTIME_FIX_MODE: alwaysIsolated
+      BROWSER_PROFILES_DIR: /app/browser-profiles
+      OBSERVER_ID: observer-docker
+    volumes:
+      - browser-profiles:/app/browser-profiles
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - bank-integration-net
+
+  frontend:
+    build:
+      context: .
+      dockerfile: front/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      VITE_API_URL: ${VITE_API_URL:-http://localhost:4000}
+    depends_on:
+      api:
+        condition: service_started
+    networks:
+      - bank-integration-net
+
+volumes:
+  pgdata:
+  browser-profiles:
+
+networks:
+  bank-integration-net:
+    driver: bridge

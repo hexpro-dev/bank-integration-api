@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1772859780269,
+      "tag": "0000_fancy_warhawk",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1772879992228,
+      "tag": "0001_sturdy_vindicator",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1773029826644,
+      "tag": "0002_lame_shape",
+      "breakpoints": true
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "skills": {
+    "encore-api": {
+      "source": "encoredev/skills",
+      "sourceType": "github",
+      "computedHash": "7ddabed759f6e39ae283cf9e4fdae654bc906256bb66f7789b633cb46810a3ed"
+    },
+    "encore-auth": {
+      "source": "encoredev/skills",
+      "sourceType": "github",
+      "computedHash": "ea864cf7546c17d0283f4bca3d6941cb5b9ceb623bff945a9baf41b0be395f77"
+    },
+    "encore-code-review": {
+      "source": "encoredev/skills",
+      "sourceType": "github",
+      "computedHash": "b34eac415624303c613162d2ce19c15c7cecf35907ee6384a1025db5391b4a2b"
+    },
+    "encore-database": {
+      "source": "encoredev/skills",
+      "sourceType": "github",
+      "computedHash": "57654dbf3b53f7028fa51fb26c2c408474a9c5ff0f4b3cdc9bf302efae0d06df"
+    },
+    "encore-getting-started": {
+      "source": "encoredev/skills",
+      "sourceType": "github",
+      "computedHash": "aaf828f27f0403f08890166ca271bacf038a2ca57ec0b5e59ee8c528bbc6d59f"
+    },
+    "heroui-react": {
+      "source": "heroui-inc/heroui",
+      "sourceType": "github",
+      "computedHash": "927aea70da0c060f930998e4c7373f790b87125798698e89f6431de689690f23"
+    }
+  }
+}
