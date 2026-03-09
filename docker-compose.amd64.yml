@@ -1,0 +1,4 @@
+services:
+  api:
+    image: bank-integration-api:latest
+    platform: linux/amd64

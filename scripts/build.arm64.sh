@@ -5,13 +5,13 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 
 ARCH="$(uname -m)"
-if [ "$ARCH" != "x86_64" ]; then
-  echo "WARNING: This script targets linux/amd64 but host arch is '$ARCH'."
-  echo "         For ARM64 hosts, use scripts/build.arm64.sh instead."
+if [ "$ARCH" != "aarch64" ]; then
+  echo "WARNING: This script targets linux/arm64 but host arch is '$ARCH'."
+  echo "         For amd64 hosts, use scripts/build.sh instead."
   echo ""
 fi
 
-echo "=== Building bank-integration Docker images (linux/amd64) ==="
+echo "=== Building bank-integration Docker images (linux/arm64) ==="
 
 echo ""
 echo "--- Building Database Package ---"
@@ -24,8 +24,8 @@ echo ""
 echo "--- Building API (Encore.ts) ---"
 cd "$PROJECT_ROOT/api"
 pnpm api:generate
-encore build docker --config infra-config.json bank-integration-api:latest
-echo "API image built: bank-integration-api:latest (linux/amd64)"
+encore build docker --config infra-config.json bank-integration-api:arm64 --arch arm64
+echo "API image built: bank-integration-api:arm64 (linux/arm64)"
 
 echo ""
 echo "--- Building Observer ---"
@@ -42,16 +42,9 @@ echo "Frontend image built: bank-integration-front:latest"
 echo ""
 echo "=== All images built successfully ==="
 echo ""
-echo "Local development:"
-echo "  1. cp .env.example .env && edit .env with your secrets"
-echo "  2. docker compose up postgres -d"
-echo "  3. export \$(grep -v '^#' .env | xargs)"
-echo "  4. cd database && pnpm db:migrate"
-echo "  5. cd api && encore run --config infra-config.json"
-echo ""
-echo "Docker deployment (amd64):"
-echo "  docker compose -f docker-compose.yml -f docker-compose.amd64.yml up -d"
+echo "Docker deployment (arm64):"
+echo "  docker compose -f docker-compose.yml -f docker-compose.arm64.yml up -d"
 echo "  (Migrations are applied automatically by the 'migrate' init service)"
 echo ""
 echo "Or use the auto-detect deploy script:"
-echo "  ./scripts/deploy.sh"
+echo "  ./scripts/deploy.sh --no-build"
