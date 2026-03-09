@@ -16,6 +16,7 @@ echo "Note: Migrations are applied automatically by the 'migrate' Docker Compose
 echo ""
 echo "--- Building API (Encore.ts) ---"
 cd "$PROJECT_ROOT/api"
+pnpm api:generate
 encore build docker --config infra-config.json bank-integration-api:latest
 echo "API image built: bank-integration-api:latest"
 
