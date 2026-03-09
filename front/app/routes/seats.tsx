@@ -90,7 +90,7 @@ export default function SeatsPage() {
         method: cfg.method,
         smsProvider: cfg.smsProvider || "",
         phoneNumber: cfg.phoneNumber || "",
-        forwardTo: cfg.forwardTo || "",
+        forwardTo: cfg.forwardTo || [],
         notificationEmail: cfg.notificationEmail || "",
         hasApiKey: cfg.hasApiKey,
         hasApiSecret: cfg.hasApiSecret,
@@ -141,7 +141,7 @@ export default function SeatsPage() {
           apiKey: twoFa.apiKey || undefined,
           apiSecret: twoFa.apiSecret || undefined,
           phoneNumber: twoFa.phoneNumber || undefined,
-          forwardTo: twoFa.forwardTo || undefined,
+          forwardTo: twoFa.forwardTo?.length ? twoFa.forwardTo : undefined,
           notificationEmail: twoFa.notificationEmail || undefined,
         });
       }
@@ -185,7 +185,7 @@ export default function SeatsPage() {
   const updateForm = (field: string, value: string) =>
     setForm((f) => ({ ...f, [field]: value }));
 
-  const updateTwoFa = (field: string, value: string) =>
+  const updateTwoFa = (field: string, value: string | string[]) =>
     setTwoFa((f) => ({ ...f, [field]: value }));
 
   const buildSelect = (

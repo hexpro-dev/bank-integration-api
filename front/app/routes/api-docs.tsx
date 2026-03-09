@@ -1,4 +1,5 @@
 import { Card } from "@heroui/react";
+import { API_URL } from "~/lib/api";
 
 interface Endpoint {
   method: "GET" | "POST" | "PUT" | "DELETE";
@@ -145,7 +146,7 @@ const SEAT_ENDPOINTS: Endpoint[] = [
     method: "PUT",
     path: "/v1/seats/:id/2fa",
     description: "Configure 2FA handling for a seat",
-    body: '{ "method": "sms|app", "smsProvider": "twilio|plivo", "apiKey": "...", "phoneNumber": "...", "forwardTo": "..." }',
+    body: '{ "method": "sms|app", "smsProvider": "twilio|plivo", "apiKey": "...", "phoneNumber": "...", "forwardTo": ["+61..."] }',
   },
   {
     method: "PUT",
@@ -261,7 +262,7 @@ export default function ApiDocsPage() {
               </p>
               <CodeBlock>
                 {`curl -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIs..." \\
-  https://your-api.com/v1/seats`}
+  ${API_URL}/v1/seats`}
               </CodeBlock>
             </div>
 
@@ -273,7 +274,7 @@ export default function ApiDocsPage() {
               </p>
               <CodeBlock>
                 {`curl -H "Authorization: ApiKey bapi_abc123def456..." \\
-  https://your-api.com/v1/accounts/123/balances`}
+  ${API_URL}/v1/accounts/123/balances`}
               </CodeBlock>
             </div>
           </div>
@@ -295,19 +296,19 @@ export default function ApiDocsPage() {
           <CodeBlock>
             {`# List your seats
 curl -H "Authorization: ApiKey bapi_abc123..." \\
-  https://your-api.com/v1/seats
+  ${API_URL}/v1/seats
 
 # Get accounts for a seat
 curl -H "Authorization: ApiKey bapi_abc123..." \\
-  https://your-api.com/v1/seats/seat_xyz/accounts
+  ${API_URL}/v1/seats/seat_xyz/accounts
 
 # Get balance for an account
 curl -H "Authorization: ApiKey bapi_abc123..." \\
-  https://your-api.com/v1/accounts/acc_456/balances
+  ${API_URL}/v1/accounts/acc_456/balances
 
 # Trigger a live refresh
 curl -X POST -H "Authorization: ApiKey bapi_abc123..." \\
-  https://your-api.com/v1/accounts/acc_456/refresh`}
+  ${API_URL}/v1/accounts/acc_456/refresh`}
           </CodeBlock>
         </Card.Content>
       </Card>

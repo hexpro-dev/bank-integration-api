@@ -1,5 +1,7 @@
 import { createTransport } from "nodemailer";
 import log from "encore.dev/log";
+import Twilio from "twilio";
+import plivo from "plivo";
 
 function getSmtpTransport() {
 	const host = process.env.SMTP_HOST;
@@ -75,12 +77,16 @@ export async function forwardSmsViaProvider(
 ): Promise<boolean> {
 	try {
 		if (provider === "twilio") {
-			const twilio = await import("twilio");
-			const client = twilio.default(apiKey, apiSecret);
+			const client = Twilio(apiKey, apiSecret);
 			await client.messages.create({ from, to, body });
 			return true;
 		}
-		log.warn("plivo SMS forwarding not yet implemented");
+		if (provider === "plivo") {
+			const client = new plivo.Client(apiKey, apiSecret);
+			await client.messages.create({ src: from, dst: to, text: body });
+			return true;
+		}
+		log.warn("unknown SMS provider", { provider });
 		return false;
 	} catch (err) {
 		log.error("SMS forwarding failed", { provider, error: String(err) });

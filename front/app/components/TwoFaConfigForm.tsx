@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Input, Label, ListBox, Select, TextField } from "@heroui/react";
+import { Button, Chip, Input, Label, ListBox, Select, TextField } from "@heroui/react";
 
 export interface TwoFaFormState {
   method: string;
@@ -7,7 +7,7 @@ export interface TwoFaFormState {
   apiKey: string;
   apiSecret: string;
   phoneNumber: string;
-  forwardTo: string;
+  forwardTo: string[];
   notificationEmail: string;
   hasApiKey?: boolean;
   hasApiSecret?: boolean;
@@ -19,13 +19,13 @@ export const EMPTY_2FA: TwoFaFormState = {
   apiKey: "",
   apiSecret: "",
   phoneNumber: "",
-  forwardTo: "",
+  forwardTo: [],
   notificationEmail: "",
 };
 
 interface TwoFaConfigFormProps {
   value: TwoFaFormState;
-  onChange: (field: string, value: string) => void;
+  onChange: (field: string, value: string | string[]) => void;
   webhookUrl?: string | null;
 }
 
@@ -57,6 +57,73 @@ function WebhookUrlField({ url }: { url: string }) {
         Set this as your SMS provider's incoming message webhook.
         For Twilio, configure it as the "A message comes in" webhook URL on your phone number.
         For Plivo, set it as the Message URL on your application.
+      </p>
+    </div>
+  );
+}
+
+function ForwardToField({
+  numbers,
+  onUpdate,
+}: {
+  numbers: string[];
+  onUpdate: (updated: string[]) => void;
+}) {
+  const [newNumber, setNewNumber] = useState("");
+
+  function addNumber() {
+    const trimmed = newNumber.trim();
+    if (!trimmed || numbers.includes(trimmed)) return;
+    onUpdate([...numbers, trimmed]);
+    setNewNumber("");
+  }
+
+  function removeNumber(idx: number) {
+    onUpdate(numbers.filter((_, i) => i !== idx));
+  }
+
+  return (
+    <div className="space-y-2">
+      <p className="text-sm font-medium">Forward To</p>
+      {numbers.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {numbers.map((num, idx) => (
+            <div key={idx} className="flex items-center gap-1">
+              <Chip size="sm" variant="soft">
+                {num}
+              </Chip>
+              <button
+                type="button"
+                className="text-default-400 hover:text-default-700 text-xs leading-none"
+                onClick={() => removeNumber(idx)}
+                aria-label={`Remove ${num}`}
+              >
+                ✕
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+      <div className="flex gap-2 items-end">
+        <TextField fullWidth onChange={setNewNumber} className="flex-1">
+          <Label className="sr-only">Add forward number</Label>
+          <Input
+            value={newNumber}
+            placeholder="+61..."
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                addNumber();
+              }
+            }}
+          />
+        </TextField>
+        <Button size="sm" variant="secondary" onPress={addNumber}>
+          Add
+        </Button>
+      </div>
+      <p className="text-xs text-default-400">
+        SMS messages will be forwarded to all numbers listed above.
       </p>
     </div>
   );
@@ -155,22 +222,18 @@ export default function TwoFaConfigForm({
             </TextField>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <TextField
-              fullWidth
-              onChange={(v) => onChange("phoneNumber", v)}
-            >
-              <Label>Phone Number</Label>
-              <Input value={value.phoneNumber} placeholder="+61..." />
-            </TextField>
-            <TextField
-              fullWidth
-              onChange={(v) => onChange("forwardTo", v)}
-            >
-              <Label>Forward To</Label>
-              <Input value={value.forwardTo} placeholder="+61..." />
-            </TextField>
-          </div>
+          <TextField
+            fullWidth
+            onChange={(v) => onChange("phoneNumber", v)}
+          >
+            <Label>Phone Number</Label>
+            <Input value={value.phoneNumber} placeholder="+61..." />
+          </TextField>
+
+          <ForwardToField
+            numbers={value.forwardTo}
+            onUpdate={(updated) => onChange("forwardTo", updated)}
+          />
 
           {webhookUrl ? (
             <WebhookUrlField url={webhookUrl} />

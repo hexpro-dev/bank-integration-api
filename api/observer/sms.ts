@@ -10,13 +10,64 @@ import {
 } from "@hex-pro/bank-integration-database/schema";
 import { send2FACode } from "./connections.js";
 import { decrypt } from "../lib/crypto.js";
+import { forwardSmsViaProvider } from "../lib/notifications.js";
 
 const EncryptionKey = secret("EncryptionKey");
-import { forwardSmsViaProvider } from "../lib/notifications.js";
 
 function parseVerificationCode(body: string): string | null {
 	const match = body.match(/\b(\d{4,8})\b/);
 	return match ? match[1] : null;
+}
+
+async function attemptSmsForward(seatId: string, smsBody: string): Promise<void> {
+	const [tfaConfig] = await orm
+		.select()
+		.from(seat2faConfigs)
+		.where(eq(seat2faConfigs.seatId, seatId))
+		.limit(1);
+
+	if (!tfaConfig?.smsForwardTo?.length || !tfaConfig.smsProvider) return;
+
+	if (
+		!tfaConfig.encryptedSmsApiKey ||
+		!tfaConfig.encryptedSmsApiSecret ||
+		!tfaConfig.smsPhoneNumber
+	) {
+		log.warn("SMS forwarding configured but credentials incomplete", {
+			seatId,
+			hasApiKey: !!tfaConfig.encryptedSmsApiKey,
+			hasApiSecret: !!tfaConfig.encryptedSmsApiSecret,
+			hasPhoneNumber: !!tfaConfig.smsPhoneNumber,
+		});
+		return;
+	}
+
+	const apiKey = decrypt(tfaConfig.encryptedSmsApiKey, EncryptionKey());
+	const apiSecret = decrypt(tfaConfig.encryptedSmsApiSecret, EncryptionKey());
+
+	const results = await Promise.allSettled(
+		tfaConfig.smsForwardTo.map((to) =>
+			forwardSmsViaProvider(
+				tfaConfig.smsProvider!,
+				apiKey,
+				apiSecret,
+				tfaConfig.smsPhoneNumber!,
+				to,
+				smsBody,
+			),
+		),
+	);
+
+	for (let i = 0; i < results.length; i++) {
+		const to = tfaConfig.smsForwardTo[i];
+		const result = results[i];
+		if (result.status === "fulfilled" && result.value) {
+			log.info("SMS forwarded", { seatId, provider: tfaConfig.smsProvider, to });
+		} else {
+			const reason = result.status === "rejected" ? String(result.reason) : "provider returned false";
+			log.warn("SMS forward failed", { seatId, provider: tfaConfig.smsProvider, to, reason });
+		}
+	}
 }
 
 export const smsWebhook = api.raw(
@@ -82,55 +133,23 @@ export const smsWebhook = api.raw(
 			return;
 		}
 
-		if (!code) {
-			log.warn("no verification code found in SMS", {
+		attemptSmsForward(seatId, smsBody).catch((err) =>
+			log.error("SMS forwarding error", { seatId, error: String(err) }),
+		);
+
+		if (code) {
+			await orm.insert(twoFactorCodes).values({
 				seatId,
-				body: smsBody,
+				code,
+				source: smsFrom || "sms_webhook",
+				receivedAt: now,
 			});
-			res.writeHead(200, { "Content-Type": "text/xml" });
-			res.end("<Response></Response>");
-			return;
-		}
 
-		await orm.insert(twoFactorCodes).values({
-			seatId,
-			code,
-			source: smsFrom || "sms_webhook",
-			receivedAt: now,
-		});
+			log.info("2FA code received via SMS", { seatId, from: smsFrom });
 
-		log.info("2FA code received via SMS", { seatId, from: smsFrom });
-
-		const sent = await send2FACode(seatId, code);
-		if (!sent) {
-			log.warn("no active observer stream to deliver 2FA code", {
-				seatId,
-			});
-		}
-
-		const [tfaConfig] = await orm
-			.select()
-			.from(seat2faConfigs)
-			.where(eq(seat2faConfigs.seatId, seatId))
-			.limit(1);
-
-		if (tfaConfig?.smsForwardTo && tfaConfig.smsProvider) {
-			if (
-				tfaConfig.encryptedSmsApiKey &&
-				tfaConfig.encryptedSmsApiSecret &&
-				tfaConfig.smsPhoneNumber
-			) {
-				const apiKey = decrypt(tfaConfig.encryptedSmsApiKey, EncryptionKey());
-				const apiSecret = decrypt(tfaConfig.encryptedSmsApiSecret, EncryptionKey());
-
-				await forwardSmsViaProvider(
-					tfaConfig.smsProvider,
-					apiKey,
-					apiSecret,
-					tfaConfig.smsPhoneNumber,
-					tfaConfig.smsForwardTo,
-					smsBody,
-				);
+			const sent = await send2FACode(seatId, code);
+			if (!sent) {
+				log.warn("no active observer stream to deliver 2FA code", { seatId });
 			}
 		}
 

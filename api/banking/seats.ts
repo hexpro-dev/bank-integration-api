@@ -60,7 +60,7 @@ interface TwoFaConfigResponse {
 	method: string;
 	smsProvider: string | null;
 	phoneNumber: string | null;
-	forwardTo: string | null;
+	forwardTo: string[] | null;
 	notificationEmail: string | null;
 	hasApiKey: boolean;
 	hasApiSecret: boolean;
@@ -112,7 +112,7 @@ interface Update2faRequest {
 	apiKey?: string;
 	apiSecret?: string;
 	phoneNumber?: string;
-	forwardTo?: string;
+	forwardTo?: string[];
 	notificationEmail?: string;
 }
 
@@ -120,7 +120,7 @@ interface Update2faResponse {
 	method: string;
 	smsProvider: string | null;
 	phoneNumber: string | null;
-	forwardTo: string | null;
+	forwardTo: string[] | null;
 	notificationEmail: string | null;
 	hasApiKey: boolean;
 	hasApiSecret: boolean;
@@ -467,7 +467,7 @@ export const update2fa = api(
 			method: req.method,
 			smsProvider: req.smsProvider ?? null,
 			smsPhoneNumber: req.phoneNumber ?? null,
-			smsForwardTo: req.forwardTo ?? null,
+			smsForwardTo: req.forwardTo?.length ? req.forwardTo : null,
 			notificationEmail: req.notificationEmail ?? null,
 			updatedAt: new Date(),
 		};

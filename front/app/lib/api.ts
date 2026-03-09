@@ -1,7 +1,7 @@
 import Client from "./client";
 import type { gateway } from "./client";
 
-const API_URL = typeof window !== "undefined"
+export const API_URL = typeof window !== "undefined"
   ? (window as any).__ENV__?.VITE_API_URL || "http://localhost:4000"
   : process.env.VITE_API_URL || "http://localhost:4000";
 

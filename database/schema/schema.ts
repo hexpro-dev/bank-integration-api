@@ -86,7 +86,7 @@ export const seat2faConfigs = pgTable("seat_2fa_configs", {
 	encryptedSmsApiKey: text("encrypted_sms_api_key"),
 	encryptedSmsApiSecret: text("encrypted_sms_api_secret"),
 	smsPhoneNumber: text("sms_phone_number"),
-	smsForwardTo: text("sms_forward_to"),
+	smsForwardTo: text("sms_forward_to").array(),
 	notificationEmail: text("notification_email"),
 	createdAt: timestamp("created_at", { withTimezone: true })
 		.defaultNow()

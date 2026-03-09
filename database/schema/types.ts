@@ -55,7 +55,7 @@ export interface Seat2faConfig {
 	encryptedSmsApiKey: string | null;
 	encryptedSmsApiSecret: string | null;
 	smsPhoneNumber: string | null;
-	smsForwardTo: string | null;
+	smsForwardTo: string[] | null;
 	notificationEmail: string | null;
 	createdAt: Date;
 	updatedAt: Date;
@@ -69,7 +69,7 @@ export interface NewSeat2faConfig {
 	encryptedSmsApiKey?: string | null;
 	encryptedSmsApiSecret?: string | null;
 	smsPhoneNumber?: string | null;
-	smsForwardTo?: string | null;
+	smsForwardTo?: string[] | null;
 	notificationEmail?: string | null;
 	createdAt?: Date;
 	updatedAt?: Date;

@@ -103,7 +103,7 @@ export default function SmsProvidersPage() {
               method: cfg.method,
               smsProvider: cfg.smsProvider || "",
               phoneNumber: cfg.phoneNumber || "",
-              forwardTo: cfg.forwardTo || "",
+              forwardTo: cfg.forwardTo || [],
               notificationEmail: cfg.notificationEmail || "",
               hasApiKey: cfg.hasApiKey,
               hasApiSecret: cfg.hasApiSecret,
@@ -131,7 +131,7 @@ export default function SmsProvidersPage() {
         apiKey: editForm.apiKey || undefined,
         apiSecret: editForm.apiSecret || undefined,
         phoneNumber: editForm.phoneNumber || undefined,
-        forwardTo: editForm.forwardTo || undefined,
+        forwardTo: editForm.forwardTo?.length ? editForm.forwardTo : undefined,
         notificationEmail: editForm.notificationEmail || undefined,
       });
       setEditingSeatId(null);
@@ -143,7 +143,7 @@ export default function SmsProvidersPage() {
     }
   }
 
-  function updateEditForm(field: string, value: string) {
+  function updateEditForm(field: string, value: string | string[]) {
     setEditForm((f) => ({ ...f, [field]: value }));
   }
 

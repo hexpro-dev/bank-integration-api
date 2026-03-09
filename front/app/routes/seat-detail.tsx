@@ -65,7 +65,7 @@ export default function SeatDetailPage() {
     const data = await client.banking.getSeat(id);
     setSeat(data);
     const cfg = data.twoFaConfig;
-    setTwoFaForm(cfg ? { ...EMPTY_2FA, ...cfg, apiKey: "", apiSecret: "" } : EMPTY_2FA);
+    setTwoFaForm(cfg ? { ...EMPTY_2FA, ...cfg, apiKey: "", apiSecret: "", forwardTo: cfg.forwardTo || [] } : EMPTY_2FA);
     setScopesForm(data.scopes || []);
   }, [id]);
 
@@ -136,7 +136,7 @@ export default function SeatDetailPage() {
         apiKey: twoFaForm.apiKey || undefined,
         apiSecret: twoFaForm.apiSecret || undefined,
         phoneNumber: twoFaForm.phoneNumber || undefined,
-        forwardTo: twoFaForm.forwardTo || undefined,
+        forwardTo: twoFaForm.forwardTo?.length ? twoFaForm.forwardTo : undefined,
         notificationEmail: twoFaForm.notificationEmail || undefined,
       });
       await fetchSeat();
@@ -176,7 +176,7 @@ export default function SeatDetailPage() {
     setScopesForm((prev) => prev.filter((_, i) => i !== idx));
   };
 
-  const updateTwoFa = (field: string, value: string) =>
+  const updateTwoFa = (field: string, value: string | string[]) =>
     setTwoFaForm((f) => ({ ...f, [field]: value }));
 
   if (loading) {
@@ -412,7 +412,7 @@ export default function SeatDetailPage() {
                   variant="ghost"
                   onPress={() => {
                     const cfg = seat.twoFaConfig;
-                    setTwoFaForm(cfg ? { ...EMPTY_2FA, ...cfg, apiKey: "", apiSecret: "" } : EMPTY_2FA);
+                    setTwoFaForm(cfg ? { ...EMPTY_2FA, ...cfg, apiKey: "", apiSecret: "", forwardTo: cfg.forwardTo || [] } : EMPTY_2FA);
                     setEditingTwoFa(true);
                   }}
                 >

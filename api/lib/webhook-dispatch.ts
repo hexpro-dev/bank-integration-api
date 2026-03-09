@@ -11,7 +11,7 @@ interface WebhookPayload {
 }
 
 function signPayload(payload: string, secret: string): string {
-	return createHmac("sha256", secret).update(payload).digest("hex");
+	return "sha256=" + createHmac("sha256", secret).update(payload).digest("hex");
 }
 
 export async function dispatchWebhooks(

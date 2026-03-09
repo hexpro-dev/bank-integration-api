@@ -44,12 +44,12 @@ export default function TwoFaReadView({ config }: TwoFaReadViewProps) {
               <span>{config.phoneNumber}</span>
             </>
           )}
-          {config.forwardTo && (
+          {config.forwardTo?.length ? (
             <>
               <span className="text-default-500">Forward To</span>
-              <span>{config.forwardTo}</span>
+              <span>{config.forwardTo.join(", ")}</span>
             </>
-          )}
+          ) : null}
           {config.webhookUrl && (
             <>
               <span className="text-default-500">Webhook URL</span>

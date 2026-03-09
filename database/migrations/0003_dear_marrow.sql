@@ -1,0 +1,1 @@
+ALTER TABLE "seat_2fa_configs" ALTER COLUMN "sms_forward_to" SET DATA TYPE text[] USING CASE WHEN "sms_forward_to" IS NOT NULL THEN ARRAY["sms_forward_to"] ELSE NULL END;
