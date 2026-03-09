@@ -21,6 +21,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Links />
       </head>
       <body className="bg-background text-foreground min-h-screen">
+        <script src="/__env.js" />
         {children}
         <ScrollRestoration />
         <Scripts />

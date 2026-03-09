@@ -12,5 +12,7 @@ WORKDIR /app
 COPY --from=build /app/front/build/client ./build/client
 COPY --from=build /app/deploy/node_modules ./node_modules
 COPY --from=build /app/deploy/package.json ./
+COPY front/docker-entrypoint.sh /app/docker-entrypoint.sh
 EXPOSE 3000
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
 CMD ["node_modules/.bin/serve", "-s", "build/client", "-l", "3000"]
