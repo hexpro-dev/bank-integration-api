@@ -9,8 +9,8 @@ RUN pnpm deploy --filter @hex-pro/bank-integration-front --prod --legacy /app/de
 
 FROM node:20-slim
 WORKDIR /app
-COPY --from=build /app/front/build ./build
+COPY --from=build /app/front/build/client ./build/client
 COPY --from=build /app/deploy/node_modules ./node_modules
 COPY --from=build /app/deploy/package.json ./
 EXPOSE 3000
-CMD ["node_modules/.bin/react-router-serve", "./build/server/index.js"]
+CMD ["node_modules/.bin/serve", "-s", "build/client", "-l", "3000"]

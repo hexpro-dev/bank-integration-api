@@ -6,13 +6,13 @@
   "scripts": {
     "dev": "react-router dev --port 3000",
     "build": "react-router build",
-    "start": "react-router-serve ./build/server/index.js",
+    "start": "serve -s build/client -l 3000",
     "typecheck": "react-router typegen && tsc"
   },
   "dependencies": {
     "@heroui/react": "beta",
     "@heroui/styles": "beta",
-    "@react-router/serve": "^7.3.0",
+    "serve": "^14.0.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-router": "^7.3.0",
