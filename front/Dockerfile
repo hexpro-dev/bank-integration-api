@@ -13,4 +13,4 @@ COPY --from=build /app/front/build ./build
 COPY --from=build /app/deploy/node_modules ./node_modules
 COPY --from=build /app/deploy/package.json ./
 EXPOSE 3000
-CMD ["npx", "react-router-serve", "./build/server/index.js"]
+CMD ["node_modules/.bin/react-router-serve", "./build/server/index.js"]
